@@ -1,8 +1,11 @@
-import { Stage, Layer, Rect, Ellipse } from "react-konva";
+import { useRef } from "react";
+import { Stage, Layer, Rect, Ellipse, Text } from "react-konva";
+import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useStore } from "../../store/useStore";
 import { toPixel, toPercentage } from "../../utills/coordinates";
 import { v4 as uuidv4 } from "uuid";
+import { SelectionTransformer } from "./SelectionTransformer";
 
 interface Props {
   width: number;
@@ -12,17 +15,18 @@ interface Props {
 const getColor = (state: string) => {
   switch (state) {
     case "ACTIVE":
-      return "#22c55e"; // Green
+      return "#22c55e";
     case "WARNING":
-      return "#ef4444"; // Red
+      return "#ef4444";
     case "INACTIVE":
-      return "#6b7280"; // Gray
+      return "#6b7280";
     default:
-      return "#22c55e"; // Default to green if unknown state
+      return "#22c55e";
   }
 };
 
 export const AnnotationCanvas = ({ width, height }: Props) => {
+  const stageRef = useRef<Konva.Stage>(null);
   const {
     activeTool,
     annotations,
@@ -33,41 +37,71 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
   } = useStore();
 
   const handleStageMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-    if (e.target !== e.target.getStage()) return;
+    if (e.target === e.target.getStage()) {
+      if (activeTool === "CURSOR") {
+        setSelectedIds([]);
+        return;
+      }
 
-    if (activeTool === "CURSOR") {
-      setSelectedIds([]);
-      return;
+      const stage = e.target.getStage();
+      const pointerPosition = stage?.getPointerPosition();
+      if (!pointerPosition) return;
+
+      const newAnnotation = {
+        id: uuidv4(),
+        type: activeTool,
+        x: toPercentage(pointerPosition.x, width),
+        y: toPercentage(pointerPosition.y, height),
+        width: toPercentage(activeTool === "ICON" ? 40 : 100, width),
+        height: toPercentage(activeTool === "ICON" ? 40 : 100, height),
+        iconType: activeTool === "ICON" ? "\uf030" : undefined,
+        colorState: "ACTIVE" as const,
+        groupId: null,
+      };
+
+      addAnnotation(newAnnotation);
     }
+  };
 
-    const stage = e.target.getStage();
-    const pointerPosition = stage?.getPointerPosition();
-    if (!pointerPosition) return;
+  const handleShapeClick = (e: KonvaEventObject<MouseEvent>, id: string) => {
+    if (activeTool !== "CURSOR") return;
 
-    const newAnnotation = {
-      id: uuidv4(),
-      type: activeTool,
-      x: toPercentage(pointerPosition.x, width),
-      y: toPercentage(pointerPosition.y, height),
-      width: toPercentage(100, width),
-      height: toPercentage(100, height),
-      colorState: "ACTIVE" as const,
-      groupId: null,
-    };
-
-    addAnnotation(newAnnotation);
+    if (e.evt.shiftKey) {
+      if (selectedIds.includes(id)) {
+        setSelectedIds(selectedIds.filter((selId) => selId !== id));
+      } else {
+        setSelectedIds([...selectedIds, id]);
+      }
+    } else {
+      setSelectedIds([id]);
+    }
   };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>, id: string) => {
+    updateAnnotation(id, {
+      x: toPercentage(e.target.x(), width),
+      y: toPercentage(e.target.y(), height),
+    });
+  };
+
+  const handleTransformEnd = (e: KonvaEventObject<Event>, id: string) => {
     const node = e.target;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    node.scaleX(1);
+    node.scaleY(1);
+
     updateAnnotation(id, {
       x: toPercentage(node.x(), width),
       y: toPercentage(node.y(), height),
+      width: toPercentage(Math.max(5, node.width() * scaleX), width),
+      height: toPercentage(Math.max(5, node.height() * scaleY), height),
     });
   };
 
   return (
     <Stage
+      ref={stageRef}
       width={width}
       height={height}
       className="absolute top-0 left-0 z-10"
@@ -76,46 +110,59 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
     >
       <Layer>
         {annotations.map((ann) => {
-          const isSelected = selectedIds.includes(ann.id);
           const strokeColor = getColor(ann.colorState);
-
-          const pixelX = toPixel(ann.x, width);
-          const pixelY = toPixel(ann.y, height);
-          const pixelWidth = toPixel(ann.width, width);
-          const pixelHeight = toPixel(ann.height, height);
-
           const commonProps = {
             id: ann.id,
-            x: pixelX,
-            y: pixelY,
-            width: pixelWidth,
-            height: pixelHeight,
-            stroke: strokeColor,
-            strokeWidth: isSelected ? 4 : 2,
+            x: toPixel(ann.x, width),
+            y: toPixel(ann.y, height),
+            width: toPixel(ann.width, width),
+            height: toPixel(ann.height, height),
+            stroke: ann.type === "ICON" ? undefined : strokeColor,
+            fill: ann.type === "ICON" ? strokeColor : undefined,
+            strokeWidth: 2,
             draggable: activeTool === "CURSOR",
-            onClick: () => setSelectedIds([ann.id]),
+            onClick: (e: KonvaEventObject<MouseEvent>) =>
+              handleShapeClick(e, ann.id),
             onDragEnd: (e: KonvaEventObject<DragEvent>) =>
               handleDragEnd(e, ann.id),
+            onTransformEnd: (e: KonvaEventObject<Event>) =>
+              handleTransformEnd(e, ann.id),
           };
 
-          if (ann.type === "RECTANGLE") {
+          if (ann.type === "RECTANGLE")
             return <Rect key={ann.id} {...commonProps} />;
-          }
-
-          if (ann.type === "ELLIPSE") {
+          if (ann.type === "ELLIPSE")
             return (
               <Ellipse
                 key={ann.id}
                 {...commonProps}
-                radiusX={pixelWidth / 2}
-                radiusY={pixelHeight / 2}
-                offset={{ x: -pixelWidth / 2, y: -pixelHeight / 2 }}
+                radiusX={commonProps.width / 2}
+                radiusY={commonProps.height / 2}
+                offset={{
+                  x: -commonProps.width / 2,
+                  y: -commonProps.height / 2,
+                }}
+              />
+            );
+
+          if (ann.type === "ICON") {
+            return (
+              <Text
+                key={ann.id}
+                {...commonProps}
+                text={ann.iconType}
+                fontFamily='"Font Awesome 6 Free"'
+                fontStyle="900"
+                fontSize={commonProps.height}
+                align="center"
+                verticalAlign="middle"
               />
             );
           }
-
           return null;
         })}
+
+        <SelectionTransformer stageRef={stageRef} />
       </Layer>
     </Stage>
   );

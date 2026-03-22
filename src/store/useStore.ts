@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ShapeType = "RECTANGLE" | "ELLIPSE" | "CURSOR";
+export type ShapeType = "RECTANGLE" | "ELLIPSE" | "CURSOR" | "ICON";
 export type AnnotationState = "ACTIVE" | "WARNING" | "INACTIVE";
 
 export interface Annotation {
@@ -10,6 +10,7 @@ export interface Annotation {
   y: number;
   width: number;
   height: number;
+  iconType?: string;
   colorState: AnnotationState;
   groupId: string | null;
 }
