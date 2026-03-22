@@ -31,6 +31,9 @@ interface AppState {
   addAnnotation: (ann: Annotation) => void;
   updateAnnotation: (id: string, updates: Partial<Annotation>) => void;
   setSelectedIds: (ids: string[]) => void;
+
+  updateSelectedStates: (colorState: AnnotationState) => void;
+  deleteSelected: () => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -58,4 +61,19 @@ export const useStore = create<AppState>((set) => ({
     })),
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
+
+  updateSelectedStates: (colorState) =>
+    set((state) => ({
+      annotations: state.annotations.map((ann) =>
+        state.selectedIds.includes(ann.id) ? { ...ann, colorState } : ann,
+      ),
+    })),
+
+  deleteSelected: () =>
+    set((state) => ({
+      annotations: state.annotations.filter(
+        (ann) => !state.selectedIds.includes(ann.id),
+      ),
+      selectedIds: [],
+    })),
 }));

@@ -124,9 +124,6 @@ export const MediaContainer = () => {
             {isPlaying ? "Pause" : "Play"}
           </button>
           <div className="w-px h-6 bg-gray-600 mx-2"></div>
-          <span className="text-sm text-gray-400">
-            Annotations will remain anchored during playback
-          </span>
         </div>
       )}
     </div>
