@@ -15,15 +15,25 @@ export const MediaContainer = () => {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    let timeoutId: number | undefined;
+
     const observer = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      setDimensions({ width, height });
+      clearTimeout(timeoutId);
+
+      // debounce to avoid rapid state updates during resizing
+      timeoutId = setTimeout(() => {
+        const { width, height } = entries[0].contentRect;
+        setDimensions({ width, height });
+      }, 100);
     });
 
     observer.observe(containerRef.current);
-    return () => observer.disconnect(); // prevents memory leaks
-  }, [mediaUrl]);
 
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
+  }, [mediaUrl]);
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
