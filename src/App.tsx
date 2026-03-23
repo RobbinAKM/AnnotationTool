@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { MediaContainer } from "./components/media/MediaContainer";
 import { Toolbar } from "./components/ui/Toolbar";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useKeyboardShortcuts();
 
   useEffect(() => {
     document.fonts.ready.then(() => {
