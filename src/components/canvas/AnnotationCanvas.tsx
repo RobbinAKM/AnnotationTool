@@ -71,13 +71,19 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
         return;
       }
 
+      const defaultWidth = activeTool === "ICON" ? 40 : 100;
+      const defaultHeight = activeTool === "ICON" ? 40 : 100;
+
+      const startX = pointer.x - defaultWidth / 2;
+      const startY = pointer.y - defaultHeight / 2;
+
       const newAnnotation = {
         id: uuidv4(),
         type: activeTool,
-        x: toPercentage(pointer.x, width),
-        y: toPercentage(pointer.y, height),
-        width: toPercentage(activeTool === "ICON" ? 40 : 100, width),
-        height: toPercentage(activeTool === "ICON" ? 40 : 100, height),
+        x: toPercentage(startX, width),
+        y: toPercentage(startY, height),
+        width: toPercentage(defaultWidth, width),
+        height: toPercentage(defaultHeight, height),
         iconType: activeTool === "ICON" ? "\uf030" : undefined,
         colorState: "ACTIVE" as const,
         groupId: null,
