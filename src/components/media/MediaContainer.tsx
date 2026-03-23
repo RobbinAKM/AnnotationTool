@@ -10,8 +10,8 @@ export const MediaContainer = () => {
 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Measure the intrinsic vs rendered size of the media container
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -34,6 +34,21 @@ export const MediaContainer = () => {
       clearTimeout(timeoutId);
     };
   }, [mediaUrl]);
+
+  const processFile = (file: File) => {
+    if (!file) return;
+
+    // file validation - only allow images and videos
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      alert("Please upload a valid image or video file.");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const type = file.type.startsWith("video/") ? "video" : "image";
+    setMedia(url, type);
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -41,6 +56,25 @@ export const MediaContainer = () => {
     const url = URL.createObjectURL(file);
     const type = file.type.startsWith("video/") ? "video" : "image";
     setMedia(url, type);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); //  Prevents the browser from opening the file in a new tab
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    // Grab the file from the drag event instead of the input element
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   const togglePlay = () => {
@@ -54,14 +88,21 @@ export const MediaContainer = () => {
   //  UPLOAD STATE
   if (!mediaUrl) {
     return (
-      <div className="flex flex-col items-center justify-center w-full max-w-2xl h-96 border-2 border-dashed border-gray-600 rounded-xl bg-gray-800/50 hover:bg-gray-800 transition-colors">
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`flex flex-col items-center justify-center w-full max-w-2xl h-96 border-2 border-dashed rounded-xl transition-all duration-200 ease-in-out ${
+          isDragging
+            ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
+            : "border-gray-600 bg-gray-800/50 hover:bg-gray-800"
+        }`}
+      >
         <Upload className="w-12 h-12 text-gray-400 mb-4" />
         <p className="text-gray-300 font-medium mb-2">
-          Drag & drop or click to upload
+          {isDragging ? "Drop file here!" : "Drag & drop or click to upload"}
         </p>
-        <p className="text-sm text-gray-500 mb-6">
-          Supports Image or Video (.mp4)
-        </p>
+
         <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md cursor-pointer transition-colors">
           Select File
           <input
@@ -90,7 +131,6 @@ export const MediaContainer = () => {
             src={mediaUrl}
             className="max-h-full max-w-full object-contain"
             onEnded={() => setIsPlaying(false)}
-            //  disable native controls because the Konva canvas covers them
           />
         ) : (
           <img
