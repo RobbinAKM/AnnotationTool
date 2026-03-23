@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  Undo,
+  Redo,
 } from "lucide-react";
 
 export const Toolbar = () => {
@@ -23,10 +25,16 @@ export const Toolbar = () => {
     updateSelectedStates,
     deleteSelected,
     annotations,
+    past,
+    future,
+    undo,
+    redo,
   } = useStore();
 
   const hasSelection = selectedIds.length > 0;
   const hasAnnotations = annotations.length > 0;
+  const canUndo = past.length > 0;
+  const canRedo = future.length > 0;
 
   // Tools Configuration
   const tools: { type: ShapeType; icon: React.ReactNode; label: string }[] = [
@@ -126,6 +134,33 @@ export const Toolbar = () => {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="mt-auto flex gap-2">
+        <button
+          onClick={undo}
+          disabled={!canUndo}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
+            canUndo
+              ? "bg-gray-700 text-white hover:bg-gray-600"
+              : "bg-gray-800 text-gray-600 cursor-not-allowed"
+          }`}
+          title="Undo (Cmd/Ctrl + Z)"
+        >
+          <Undo size={16} /> Undo
+        </button>
+        <button
+          onClick={redo}
+          disabled={!canRedo}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
+            canRedo
+              ? "bg-gray-700 text-white hover:bg-gray-600"
+              : "bg-gray-800 text-gray-600 cursor-not-allowed"
+          }`}
+          title="Redo (Cmd/Ctrl + Shift + Z)"
+        >
+          <Redo size={16} /> Redo
+        </button>
       </section>
 
       <section className="mt-auto flex flex-col gap-2">
