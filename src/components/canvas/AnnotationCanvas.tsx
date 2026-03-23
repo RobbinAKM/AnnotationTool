@@ -71,8 +71,8 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
         return;
       }
 
-      const defaultWidth = activeTool === "ICON" ? 40 : 100;
-      const defaultHeight = activeTool === "ICON" ? 40 : 100;
+      const defaultWidth = activeTool === "ICON" ? width * 0.04 : width * 0.1;
+      const defaultHeight = activeTool === "ICON" ? width * 0.04 : width * 0.1;
 
       const startX = pointer.x - defaultWidth / 2;
       const startY = pointer.y - defaultHeight / 2;
