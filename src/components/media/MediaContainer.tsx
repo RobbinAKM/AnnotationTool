@@ -86,25 +86,36 @@ export const MediaContainer = () => {
   };
 
   //  UPLOAD STATE
+
   if (!mediaUrl) {
     return (
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`flex flex-col items-center justify-center w-full max-w-2xl h-96 border-2 border-dashed rounded-xl transition-all duration-200 ease-in-out ${
+        className={`flex flex-col items-center justify-center w-full max-w-lg p-12 rounded-2xl border-2 border-dashed transition-all duration-300 ease-out shadow-2xl ${
           isDragging
-            ? "border-blue-500 bg-blue-500/10 scale-[1.02]"
-            : "border-gray-600 bg-gray-800/50 hover:bg-gray-800"
+            ? "border-cyan-500 bg-cyan-950/20 scale-105 shadow-[0_0_30px_rgba(6,182,212,0.15)]"
+            : "border-slate-700 bg-slate-900/50 hover:border-slate-500 hover:bg-slate-800/50"
         }`}
       >
-        <Upload className="w-12 h-12 text-gray-400 mb-4" />
-        <p className="text-gray-300 font-medium mb-2">
-          {isDragging ? "Drop file here!" : "Drag & drop or click to upload"}
+        <div
+          className={`p-4 rounded-full mb-6 transition-colors duration-300 ${isDragging ? "bg-cyan-900/50 text-cyan-400" : "bg-slate-800 text-slate-400"}`}
+        >
+          <Upload size={32} strokeWidth={1.5} />
+        </div>
+
+        <h2 className="text-xl font-semibold text-slate-200 mb-2">
+          {isDragging ? "Incoming Media Feed..." : "Load Media Feed"}
+        </h2>
+        <p className="text-sm text-slate-500 mb-8 text-center max-w-xs">
+          Drag and drop secure footage (.mp4) or surveillance imagery (.jpg,
+          .png) here.
         </p>
 
-        <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md cursor-pointer transition-colors">
-          Select File
+        <label className="group relative inline-flex items-center justify-center px-8 py-3 font-semibold text-white transition-all duration-200 bg-cyan-600 rounded-lg cursor-pointer hover:bg-cyan-500 overflow-hidden">
+          <span className="relative z-10">Browse Files</span>
+          <div className="absolute inset-0 h-full w-full scale-0 rounded-lg transition-all duration-300 group-hover:scale-100 group-hover:bg-white/10"></div>
           <input
             type="file"
             className="hidden"

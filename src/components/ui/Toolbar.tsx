@@ -17,6 +17,15 @@ import {
   Redo,
 } from "lucide-react";
 
+const SectionHeader = ({ title }: { title: string }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <div className="w-1 h-3 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+    <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+      {title}
+    </h2>
+  </div>
+);
+
 export const Toolbar = () => {
   const {
     activeTool,
@@ -90,102 +99,114 @@ export const Toolbar = () => {
   };
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-8">
+      {/* DRAWING TOOLS */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-          Tools
-        </h2>
+        <SectionHeader title="Deployment Tools" />
         <div className="flex flex-col gap-2">
-          {tools.map((tool) => (
-            <button
-              key={tool.type}
-              onClick={() => setActiveTool(tool.type)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                activeTool === tool.type
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              {tool.icon}
-              <span className="text-sm font-medium">{tool.label}</span>
-            </button>
-          ))}
+          {tools.map((tool) => {
+            const isActive = activeTool === tool.type;
+            return (
+              <button
+                key={tool.type}
+                onClick={() => setActiveTool(tool.type)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 group ${
+                  isActive
+                    ? "bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_20px_rgba(6,182,212,0.15)]"
+                    : "bg-slate-800/40 border-slate-700/50 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 hover:border-slate-600"
+                }`}
+              >
+                <div
+                  className={`transition-transform duration-300 ${isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" : "group-hover:scale-110"}`}
+                >
+                  {tool.icon}
+                </div>
+                <span className="text-sm font-medium tracking-wide">
+                  {tool.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
+      {/* COLOR STATES */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-          Annotation State
-        </h2>
+        <SectionHeader title="Node State" />
         <div className="flex flex-col gap-2">
           {colorStates.map((cs) => (
             <button
               key={cs.state}
               disabled={!hasSelection}
               onClick={() => updateSelectedStates(cs.state)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md border border-transparent transition-all ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 ${
                 hasSelection
-                  ? cs.colorClass
-                  : "opacity-30 cursor-not-allowed text-gray-500"
+                  ? `${cs.colorClass} shadow-sm`
+                  : "opacity-40 cursor-not-allowed border-slate-800 bg-slate-800/20 text-slate-600 grayscale"
               }`}
             >
               {cs.icon}
-              <span className="text-sm font-medium">{cs.label}</span>
+              <span className="text-sm font-medium tracking-wide">
+                {cs.label}
+              </span>
             </button>
           ))}
         </div>
       </section>
 
-      <section className="mt-auto flex gap-2">
-        <button
-          onClick={undo}
-          disabled={!canUndo}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
-            canUndo
-              ? "bg-gray-700 text-white hover:bg-gray-600"
-              : "bg-gray-800 text-gray-600 cursor-not-allowed"
-          }`}
-          title="Undo (Cmd/Ctrl + Z)"
-        >
-          <Undo size={16} /> Undo
-        </button>
-        <button
-          onClick={redo}
-          disabled={!canRedo}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
-            canRedo
-              ? "bg-gray-700 text-white hover:bg-gray-600"
-              : "bg-gray-800 text-gray-600 cursor-not-allowed"
-          }`}
-          title="Redo (Cmd/Ctrl + Shift + Z)"
-        >
-          <Redo size={16} /> Redo
-        </button>
-      </section>
+      {/*HISTORY & ACTIONS (Pushed to bottom) */}
+      <section className="mt-auto flex flex-col gap-3 mb-[30px]">
+        {/* Undo / Redo Pill */}
+        <div className="flex bg-slate-800/50 rounded-lg p-1 border border-slate-700/50">
+          <button
+            onClick={undo}
+            disabled={!canUndo}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+              canUndo
+                ? "text-slate-300 hover:bg-slate-700 hover:text-white hover:shadow-md"
+                : "text-slate-600 cursor-not-allowed"
+            }`}
+          >
+            <Undo size={14} /> Undo
+          </button>
+          <div className="w-px bg-slate-700/50 my-1 mx-1"></div>
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+              canRedo
+                ? "text-slate-300 hover:bg-slate-700 hover:text-white hover:shadow-md"
+                : "text-slate-600 cursor-not-allowed"
+            }`}
+          >
+            <Redo size={14} /> Redo
+          </button>
+        </div>
 
-      <section className="mt-auto flex flex-col gap-2">
+        {/* Delete Action */}
         <button
           onClick={deleteSelected}
           disabled={!hasSelection}
-          className={`flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold transition-all duration-300 border ${
             hasSelection
-              ? "bg-red-900/50 text-red-400 hover:bg-red-900/80"
-              : "bg-gray-800 text-gray-600 cursor-not-allowed"
+              ? "bg-rose-950/30 text-rose-400 border-rose-900/50 hover:bg-rose-900/40 hover:text-rose-300 hover:border-rose-500/50 hover:shadow-[0_0_15px_rgba(225,29,72,0.15)]"
+              : "bg-slate-800/20 text-slate-600 border-slate-800 cursor-not-allowed"
           }`}
         >
-          <Trash2 size={16} /> Delete Selected
+          <Trash2 size={16} /> Purge Selected Node
         </button>
 
+        {/* Export Action */}
         <button
           onClick={handleExport}
           disabled={!hasAnnotations}
-          className={`flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 border ${
             hasAnnotations
-              ? "bg-gray-700 text-white hover:bg-gray-600"
-              : "bg-gray-800 text-gray-600 cursor-not-allowed"
+              ? "bg-cyan-600 text-white border-cyan-500 hover:bg-cyan-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+              : "bg-slate-800/40 text-slate-600 border-slate-700/50 cursor-not-allowed"
           }`}
         >
-          <Download size={16} /> Export JSON
+          <Download size={18} /> Export Telemetry Data
         </button>
       </section>
     </div>
