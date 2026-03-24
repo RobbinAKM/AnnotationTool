@@ -1,36 +1,22 @@
 import { useRef, useState } from "react";
-import { Stage, Layer, Rect, Ellipse, Text, Arrow, Line } from "react-konva";
+import { Stage, Layer, Rect, Line } from "react-konva";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useStore } from "../../store/useStore";
-import { toPixel, toPercentage } from "../../utills/coordinates";
-import { v4 as uuidv4 } from "uuid";
+import { toPixel } from "../../utills/coordinates";
 import { SelectionTransformer } from "./SelectionTransformer";
+import ShapeRenderer from "./shapes";
+import { getColor } from "./utils/colors";
+import { useCanvasHandlers } from "./hooks/useCanvasHandlers";
 
 interface Props {
   width: number;
   height: number;
 }
 
-const getColor = (state: string) => {
-  switch (state) {
-    case "ACTIVE":
-      return "#22c55e";
-    case "WARNING":
-      return "#ef4444";
-    case "INACTIVE":
-      return "#6b7280";
-    default:
-      return "#22c55e";
-  }
-};
-
 export const AnnotationCanvas = ({ width, height }: Props) => {
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
-
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentLine, setCurrentLine] = useState<number[]>([]);
 
   const [editingText, setEditingText] = useState<{
     id: string;
@@ -41,233 +27,19 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
     fontSize: number;
   } | null>(null);
 
+  const { activeTool, annotations, updateAnnotation } = useStore();
+
   const {
-    activeTool,
-    activeIcon,
-    annotations,
-    selectedIds,
-    setActiveTool,
-    addAnnotation,
-    updateAnnotation,
-    setSelectedIds,
-  } = useStore();
-
-  const [selectionBox, setSelectionBox] = useState({
-    visible: false,
-    startX: 0,
-    startY: 0,
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
-
-  const handleStageMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-    if (e.target === e.target.getStage()) {
-      const stage = e.target.getStage();
-      const pointer = stage?.getPointerPosition();
-      if (!pointer) return;
-
-      if (activeTool === "CURSOR") {
-        setSelectionBox({
-          visible: true,
-          startX: pointer.x,
-          startY: pointer.y,
-          x: pointer.x,
-          y: pointer.y,
-          width: 0,
-          height: 0,
-        });
-        setSelectedIds([]);
-        return;
-      }
-
-      if (activeTool === "FREEHAND") {
-        setIsDrawing(true);
-        setCurrentLine([
-          toPercentage(pointer.x, width),
-          toPercentage(pointer.y, height),
-        ]);
-        setSelectedIds([]);
-        return;
-      }
-
-      if (activeTool === "TEXT") {
-        const defaultFontSize = width * 0.03; // Scales with the media
-        addAnnotation({
-          id: uuidv4(),
-          type: "TEXT",
-          x: toPercentage(pointer.x, width),
-          y: toPercentage(pointer.y, height),
-          width: toPercentage(defaultFontSize * 8, width),
-          height: toPercentage(defaultFontSize, height),
-          textValue: "DOUBLE CLICK TO EDIT", // Default text
-          colorState: "ACTIVE" as const,
-          groupId: null,
-        });
-        setActiveTool("CURSOR");
-        return;
-      }
-
-      // Dynamic Base Sizing
-      const defaultWidth = activeTool === "ICON" ? width * 0.04 : width * 0.1;
-      const defaultHeight = activeTool === "ICON" ? width * 0.04 : width * 0.1;
-
-      // Center spawn point
-      const startX = pointer.x - defaultWidth / 2;
-      const startY = pointer.y - defaultHeight / 2;
-
-      addAnnotation({
-        id: uuidv4(),
-        type: activeTool,
-        x: toPercentage(startX, width),
-        y: toPercentage(startY, height),
-        width: toPercentage(defaultWidth, width),
-        height: toPercentage(defaultHeight, height),
-        iconType: activeTool === "ICON" ? activeIcon : undefined,
-        colorState: "ACTIVE" as const,
-        groupId: null,
-      });
-    }
-  };
-
-  const handleStageMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-    const stage = e.target.getStage();
-    const pointer = stage?.getPointerPosition();
-    if (!pointer) return;
-
-    if (activeTool === "FREEHAND" && isDrawing) {
-      setCurrentLine((prev) => [
-        ...prev,
-        toPercentage(pointer.x, width),
-        toPercentage(pointer.y, height),
-      ]);
-      return;
-    }
-
-    if (selectionBox.visible && activeTool === "CURSOR") {
-      setSelectionBox((prev) => ({
-        ...prev,
-        x: Math.min(pointer.x, prev.startX),
-        y: Math.min(pointer.y, prev.startY),
-        width: Math.abs(pointer.x - prev.startX),
-        height: Math.abs(pointer.y - prev.startY),
-      }));
-    }
-  };
-
-  const handleStageMouseUp = () => {
-    if (activeTool === "FREEHAND" && isDrawing) {
-      setIsDrawing(false);
-      if (currentLine.length > 2) {
-        addAnnotation({
-          id: uuidv4(),
-          type: "FREEHAND",
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-          points: [...currentLine],
-          colorState: "ACTIVE" as const,
-          groupId: null,
-        });
-      }
-      setCurrentLine([]);
-      setActiveTool("CURSOR");
-      return;
-    }
-
-    if (activeTool === "CURSOR" && selectionBox.visible) {
-      setSelectionBox((prev) => ({ ...prev, visible: false }));
-      if (selectionBox.width === 0 && selectionBox.height === 0) return;
-
-      setTimeout(() => {
-        if (!layerRef.current) return;
-        const shapes = layerRef.current.getChildren();
-        const boxRect = {
-          x: selectionBox.x,
-          y: selectionBox.y,
-          width: selectionBox.width,
-          height: selectionBox.height,
-        };
-        const newSelectedIds: string[] = [];
-
-        shapes.forEach((shape) => {
-          if (
-            shape.name() === "selection-box" ||
-            shape.className === "Transformer"
-          )
-            return;
-          const shapeRect = shape.getClientRect({ skipTransform: false });
-          if (Konva.Util.haveIntersection(boxRect, shapeRect))
-            newSelectedIds.push(shape.id());
-        });
-        setSelectedIds(newSelectedIds);
-      });
-    }
-    setActiveTool("CURSOR");
-  };
-
-  const handleShapeClick = (e: KonvaEventObject<MouseEvent>, id: string) => {
-    console.log("Shape clicked:", id, "Shift pressed:", e.evt.shiftKey);
-    if (activeTool !== "CURSOR") return;
-    if (e.evt.shiftKey) {
-      if (selectedIds.includes(id))
-        setSelectedIds(selectedIds.filter((selId) => selId !== id));
-      else setSelectedIds([...selectedIds, id]);
-    } else {
-      setSelectedIds([id]);
-    }
-  };
-
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>, id: string) => {
-    console.log("Drag ended for:", id, "New position:", {
-      x: e.target.x(),
-      y: e.target.y(),
-    });
-    updateAnnotation(id, {
-      x: toPercentage(e.target.x(), width),
-      y: toPercentage(e.target.y(), height),
-    });
-  };
-
-  const handleTransformEnd = (e: KonvaEventObject<Event>, id: string) => {
-    const node = e.target;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-    node.scaleX(1);
-    node.scaleY(1);
-
-    const ann = annotations.find((a) => a.id === id);
-
-    if (ann?.type === "FREEHAND" && ann.points) {
-      const scaledPoints = ann.points.map((p, i) =>
-        i % 2 === 0 ? p * scaleX : p * scaleY,
-      );
-      updateAnnotation(id, {
-        x: toPercentage(node.x(), width),
-        y: toPercentage(node.y(), height),
-        points: scaledPoints,
-        rotation: node.rotation(),
-      });
-    } else {
-      updateAnnotation(id, {
-        x: toPercentage(node.x(), width),
-        y: toPercentage(node.y(), height),
-        width: toPercentage(Math.max(5, node.width() * scaleX), width),
-        height: toPercentage(Math.max(5, node.height() * scaleY), height),
-        rotation: node.rotation(),
-      });
-    }
-
-    updateAnnotation(id, {
-      x: toPercentage(node.x(), width),
-      y: toPercentage(node.y(), height),
-      width: toPercentage(Math.max(5, node.width() * scaleX), width),
-      height: toPercentage(Math.max(5, node.height() * scaleY), height),
-      rotation: node.rotation(),
-    });
-  };
+    isDrawing,
+    currentLine,
+    selectionBox,
+    handleStageMouseDown,
+    handleStageMouseMove,
+    handleStageMouseUp,
+    handleShapeClick,
+    handleDragEnd,
+    handleTransformEnd,
+  } = useCanvasHandlers({ layerRef, width, height });
 
   return (
     <>
@@ -303,108 +75,27 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
                 handleTransformEnd(e, ann.id),
             };
 
-            if (ann.type === "RECTANGLE")
-              return <Rect key={ann.id} {...commonProps} />;
-            if (ann.type === "ELLIPSE")
-              return (
-                <Ellipse
-                  key={ann.id}
-                  {...commonProps}
-                  radiusX={commonProps.width / 2}
-                  radiusY={commonProps.height / 2}
-                  offset={{
-                    x: -commonProps.width / 2,
-                    y: -commonProps.height / 2,
-                  }}
-                />
-              );
-
-            if (ann.type === "ICON") {
-              return (
-                <Text
-                  key={ann.id}
-                  {...commonProps}
-                  text={ann.iconType}
-                  fontFamily='"Font Awesome 6 Free"'
-                  fontStyle="900"
-                  fontSize={commonProps.height}
-                  align="center"
-                  verticalAlign="middle"
-                />
-              );
-            }
-
-            if (ann.type === "LINE") {
-              return (
-                <Arrow
-                  key={ann.id}
-                  {...commonProps}
-                  points={[0, 0, commonProps.width, commonProps.height]}
-                  pointerLength={6}
-                  pointerWidth={6}
-                  fill={commonProps.stroke}
-                  strokeWidth={15}
-                />
-              );
-            }
-
-            if (ann.type === "FREEHAND" && ann.points) {
-              return (
-                <Line
-                  key={ann.id}
-                  id={ann.id}
-                  x={toPixel(ann.x, width)}
-                  y={toPixel(ann.y, height)}
-                  points={ann.points.map((p, i) =>
-                    i % 2 === 0 ? toPixel(p, width) : toPixel(p, height),
-                  )}
-                  stroke={getColor(ann.colorState)}
-                  strokeWidth={2}
-                  tension={0.5}
-                  lineCap="round"
-                  lineJoin="round"
-                  hitStrokeWidth={15}
-                  draggable={activeTool === "CURSOR"}
-                  rotation={ann.rotation || 0}
-                  onClick={(e: KonvaEventObject<MouseEvent>) =>
-                    handleShapeClick(e, ann.id)
-                  }
-                  onTransformEnd={(e: KonvaEventObject<Event>) =>
-                    handleTransformEnd(e, ann.id)
-                  }
-                />
-              );
-            }
-
-            if (ann.type === "TEXT") {
-              return (
-                <Text
-                  key={ann.id}
-                  {...commonProps}
-                  text={ann.textValue || "TEXT LABEL"}
-                  fontSize={toPixel(ann.height, height)}
-                  fill={commonProps.stroke} // Text uses fill, not stroke
-                  fontFamily="sans-serif"
-                  fontStyle="bold"
-                  onDblClick={(e) => {
-                    // When double clicked, get its exact screen position and open the HTML input
-                    const absPos = e.target.absolutePosition();
-                    setEditingText({
-                      id: ann.id,
-                      x: absPos.x,
-                      y: absPos.y,
-                      value: ann.textValue || "",
-                      width: Math.max(
-                        200,
-                        e.target.width() * e.target.scaleX(),
-                      ),
-                      fontSize: toPixel(ann.height, height) * e.target.scaleY(),
-                    });
-                  }}
-                />
-              );
-            }
-            return null;
+            return (
+              <ShapeRenderer
+                key={ann.id}
+                ann={ann}
+                common={commonProps}
+                width={width}
+                height={height}
+                onDblClick={(e: KonvaEventObject<MouseEvent>) => {
+                  if (ann.type !== "TEXT") return;
+                  const absPos = e.target.absolutePosition();
+                  setEditingText({
+                    id: ann.id,
+                    x: absPos.x,
+                    y: absPos.y,
+                    value: ann.textValue || "",
+                    width: Math.max(200, e.target.width() * e.target.scaleX()),
+                    fontSize: toPixel(ann.height, height) * e.target.scaleY(),
+                  });
+                }}
+              />
+            );
           })}
 
           {selectionBox.visible && (
