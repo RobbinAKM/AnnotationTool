@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ShapeType = "RECTANGLE" | "ELLIPSE" | "CURSOR" | "ICON";
+export type ShapeType = "RECTANGLE" | "ELLIPSE" | "CURSOR" | "ICON" | "LINE";
 export type AnnotationState = "ACTIVE" | "WARNING" | "INACTIVE";
 
 export interface Annotation {
@@ -23,7 +23,8 @@ interface AppState {
 
   // Tool State
   activeTool: ShapeType;
-  setActiveTool: (tool: ShapeType) => void;
+  activeIcon: string;
+  setActiveTool: (tool: ShapeType, iconUnicode?: string) => void;
 
   // Annotation State
   annotations: Annotation[];
@@ -49,7 +50,9 @@ export const useStore = create<AppState>((set) => ({
   setMedia: (url, type) => set({ mediaUrl: url, mediaType: type }),
 
   activeTool: "CURSOR",
-  setActiveTool: (tool) => set({ activeTool: tool }),
+  activeIcon: "\uf030", // Default to camera icon for ICON tool
+  setActiveTool: (tool, iconUnicode) =>
+    set({ activeTool: tool, activeIcon: iconUnicode || "\uf030" }),
 
   annotations: [],
   selectedIds: [],

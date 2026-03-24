@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Stage, Layer, Rect, Ellipse, Text } from "react-konva";
+import { Stage, Layer, Rect, Ellipse, Text, Arrow } from "react-konva";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useStore } from "../../store/useStore";
@@ -30,6 +30,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
   const layerRef = useRef<Konva.Layer>(null);
   const {
     activeTool,
+    activeIcon,
     annotations,
     selectedIds,
     addAnnotation,
@@ -84,7 +85,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
         y: toPercentage(startY, height),
         width: toPercentage(defaultWidth, width),
         height: toPercentage(defaultHeight, height),
-        iconType: activeTool === "ICON" ? "\uf030" : undefined,
+        iconType: activeTool === "ICON" ? activeIcon : undefined,
         colorState: "ACTIVE" as const,
         groupId: null,
       };
@@ -119,6 +120,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
     setTimeout(() => {
       if (!layerRef.current) return;
       const shapes = layerRef.current.getChildren();
+      console.log("checvking selected shapes", layerRef);
       const boxRect = {
         x: selectionBox.x,
         y: selectionBox.y,
@@ -245,6 +247,19 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
                 fontSize={commonProps.height}
                 align="center"
                 verticalAlign="middle"
+              />
+            );
+          }
+
+          if (ann.type === "LINE") {
+            return (
+              <Arrow
+                key={ann.id}
+                {...commonProps}
+                points={[0, 0, commonProps.width, commonProps.height]}
+                pointerLength={15}
+                pointerWidth={15}
+                fill={commonProps.stroke}
               />
             );
           }

@@ -15,8 +15,11 @@ import {
   XCircle,
   Undo,
   Redo,
+  Car,
+  User,
+  Leaf,
+  ArrowUpRight,
 } from "lucide-react";
-
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="w-1 h-3 bg-cyan-500 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
@@ -29,6 +32,7 @@ const SectionHeader = ({ title }: { title: string }) => (
 export const Toolbar = () => {
   const {
     activeTool,
+    activeIcon,
     setActiveTool,
     selectedIds,
     updateSelectedStates,
@@ -46,17 +50,49 @@ export const Toolbar = () => {
   const canRedo = future.length > 0;
 
   // Tools Configuration
-  const tools: { type: ShapeType; icon: React.ReactNode; label: string }[] = [
+  const tools: {
+    type: ShapeType;
+    icon: React.ReactNode;
+    label: string;
+    faCode?: string;
+  }[] = [
     {
       type: "CURSOR",
       icon: <MousePointer2 size={18} />,
       label: "Select / Drag",
     },
-    { type: "RECTANGLE", icon: <Square size={18} />, label: "Rectangle" },
-    { type: "ELLIPSE", icon: <Circle size={18} />, label: "Ellipse" },
-    { type: "ICON", icon: <Camera size={18} />, label: "Camera Icon" },
+    { type: "RECTANGLE", icon: <Square size={18} />, label: "Rectangle Box" },
+    { type: "ELLIPSE", icon: <Circle size={18} />, label: "Ellipse Radius" },
+    {
+      type: "LINE",
+      icon: <ArrowUpRight size={18} />,
+      label: "Directional Arrow",
+    },
+    {
+      type: "ICON",
+      faCode: "\uf030",
+      icon: <Camera size={18} />,
+      label: "Camera Node",
+    },
+    {
+      type: "ICON",
+      faCode: "\uf1b9",
+      icon: <Car size={18} />,
+      label: "Vehicle Node",
+    },
+    {
+      type: "ICON",
+      faCode: "\uf007",
+      icon: <User size={18} />,
+      label: "Person Node",
+    },
+    {
+      type: "ICON",
+      faCode: "\uf06c",
+      icon: <Leaf size={18} />,
+      label: "Environment Node",
+    },
   ];
-
   // Color States Configuration
   const colorStates: {
     state: AnnotationState;
@@ -105,11 +141,13 @@ export const Toolbar = () => {
         <SectionHeader title="Deployment Tools" />
         <div className="flex flex-col gap-2">
           {tools.map((tool) => {
-            const isActive = activeTool === tool.type;
+            const isActive =
+              activeTool === tool.type &&
+              (tool.type !== "ICON" || activeIcon === tool.faCode);
             return (
               <button
                 key={tool.type}
-                onClick={() => setActiveTool(tool.type)}
+                onClick={() => setActiveTool(tool.type, tool.faCode)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 group ${
                   isActive
                     ? "bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_20px_rgba(6,182,212,0.15)]"
