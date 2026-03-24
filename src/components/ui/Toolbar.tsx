@@ -20,6 +20,7 @@ import {
   Leaf,
   ArrowUpRight,
   PenTool,
+  Type,
 } from "lucide-react";
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center gap-2 mb-4">
@@ -62,6 +63,7 @@ export const Toolbar = () => {
       icon: <MousePointer2 size={18} />,
       label: "Select / Drag",
     },
+    { type: "TEXT", icon: <Type size={18} />, label: "Text Label" },
     { type: "RECTANGLE", icon: <Square size={18} />, label: "Rectangle Box" },
     { type: "ELLIPSE", icon: <Circle size={18} />, label: "Ellipse Radius" },
     {

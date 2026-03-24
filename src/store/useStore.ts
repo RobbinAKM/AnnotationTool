@@ -6,7 +6,8 @@ export type ShapeType =
   | "CURSOR"
   | "ICON"
   | "LINE"
-  | "FREEHAND";
+  | "FREEHAND"
+  | "TEXT";
 export type AnnotationState = "ACTIVE" | "WARNING" | "INACTIVE";
 
 export interface Annotation {
@@ -21,6 +22,7 @@ export interface Annotation {
   groupId: string | null;
   rotation?: number;
   points?: number[];
+  textValue?: string;
 }
 
 interface AppState {

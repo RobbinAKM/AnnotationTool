@@ -32,11 +32,21 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLine, setCurrentLine] = useState<number[]>([]);
 
+  const [editingText, setEditingText] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    value: string;
+    width: number;
+    fontSize: number;
+  } | null>(null);
+
   const {
     activeTool,
     activeIcon,
     annotations,
     selectedIds,
+    setActiveTool,
     addAnnotation,
     updateAnnotation,
     setSelectedIds,
@@ -79,6 +89,23 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
           toPercentage(pointer.y, height),
         ]);
         setSelectedIds([]);
+        return;
+      }
+
+      if (activeTool === "TEXT") {
+        const defaultFontSize = width * 0.03; // Scales with the media
+        addAnnotation({
+          id: uuidv4(),
+          type: "TEXT",
+          x: toPercentage(pointer.x, width),
+          y: toPercentage(pointer.y, height),
+          width: toPercentage(defaultFontSize * 8, width),
+          height: toPercentage(defaultFontSize, height),
+          textValue: "DOUBLE CLICK TO EDIT", // Default text
+          colorState: "ACTIVE" as const,
+          groupId: null,
+        });
+        setActiveTool("CURSOR");
         return;
       }
 
@@ -146,6 +173,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
         });
       }
       setCurrentLine([]);
+      setActiveTool("CURSOR");
       return;
     }
 
@@ -177,6 +205,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
         setSelectedIds(newSelectedIds);
       });
     }
+    setActiveTool("CURSOR");
   };
 
   const handleShapeClick = (e: KonvaEventObject<MouseEvent>, id: string) => {
@@ -241,141 +270,212 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
   };
 
   return (
-    <Stage
-      ref={stageRef}
-      width={width}
-      height={height}
-      className="absolute top-0 left-0 z-10"
-      style={{ cursor: activeTool === "CURSOR" ? "default" : "crosshair" }}
-      onMouseDown={handleStageMouseDown}
-      onMouseMove={handleStageMouseMove}
-      onMouseUp={handleStageMouseUp}
-    >
-      <Layer ref={layerRef}>
-        {annotations.map((ann) => {
-          const strokeColor = getColor(ann.colorState);
-          const commonProps = {
-            id: ann.id,
-            x: toPixel(ann.x, width),
-            y: toPixel(ann.y, height),
-            width: toPixel(ann.width, width),
-            height: toPixel(ann.height, height),
-            rotation: ann.rotation || 0,
-            stroke: ann.type === "ICON" ? undefined : strokeColor,
-            fill: ann.type === "ICON" ? strokeColor : undefined,
-            strokeWidth: 2,
-            draggable: activeTool === "CURSOR",
-            onClick: (e: KonvaEventObject<MouseEvent>) =>
-              handleShapeClick(e, ann.id),
-            onDragEnd: (e: KonvaEventObject<DragEvent>) =>
-              handleDragEnd(e, ann.id),
-            onTransformEnd: (e: KonvaEventObject<Event>) =>
-              handleTransformEnd(e, ann.id),
-          };
+    <>
+      <Stage
+        ref={stageRef}
+        width={width}
+        height={height}
+        className="absolute top-0 left-0 z-10"
+        style={{ cursor: activeTool === "CURSOR" ? "default" : "crosshair" }}
+        onMouseDown={handleStageMouseDown}
+        onMouseMove={handleStageMouseMove}
+        onMouseUp={handleStageMouseUp}
+      >
+        <Layer ref={layerRef}>
+          {annotations.map((ann) => {
+            const strokeColor = getColor(ann.colorState);
+            const commonProps = {
+              id: ann.id,
+              x: toPixel(ann.x, width),
+              y: toPixel(ann.y, height),
+              width: toPixel(ann.width, width),
+              height: toPixel(ann.height, height),
+              rotation: ann.rotation || 0,
+              stroke: ann.type === "ICON" ? undefined : strokeColor,
+              fill: ann.type === "ICON" ? strokeColor : undefined,
+              strokeWidth: 2,
+              draggable: activeTool === "CURSOR",
+              onClick: (e: KonvaEventObject<MouseEvent>) =>
+                handleShapeClick(e, ann.id),
+              onDragEnd: (e: KonvaEventObject<DragEvent>) =>
+                handleDragEnd(e, ann.id),
+              onTransformEnd: (e: KonvaEventObject<Event>) =>
+                handleTransformEnd(e, ann.id),
+            };
 
-          if (ann.type === "RECTANGLE")
-            return <Rect key={ann.id} {...commonProps} />;
-          if (ann.type === "ELLIPSE")
-            return (
-              <Ellipse
-                key={ann.id}
-                {...commonProps}
-                radiusX={commonProps.width / 2}
-                radiusY={commonProps.height / 2}
-                offset={{
-                  x: -commonProps.width / 2,
-                  y: -commonProps.height / 2,
-                }}
-              />
-            );
+            if (ann.type === "RECTANGLE")
+              return <Rect key={ann.id} {...commonProps} />;
+            if (ann.type === "ELLIPSE")
+              return (
+                <Ellipse
+                  key={ann.id}
+                  {...commonProps}
+                  radiusX={commonProps.width / 2}
+                  radiusY={commonProps.height / 2}
+                  offset={{
+                    x: -commonProps.width / 2,
+                    y: -commonProps.height / 2,
+                  }}
+                />
+              );
 
-          if (ann.type === "ICON") {
-            return (
-              <Text
-                key={ann.id}
-                {...commonProps}
-                text={ann.iconType}
-                fontFamily='"Font Awesome 6 Free"'
-                fontStyle="900"
-                fontSize={commonProps.height}
-                align="center"
-                verticalAlign="middle"
-              />
-            );
+            if (ann.type === "ICON") {
+              return (
+                <Text
+                  key={ann.id}
+                  {...commonProps}
+                  text={ann.iconType}
+                  fontFamily='"Font Awesome 6 Free"'
+                  fontStyle="900"
+                  fontSize={commonProps.height}
+                  align="center"
+                  verticalAlign="middle"
+                />
+              );
+            }
+
+            if (ann.type === "LINE") {
+              return (
+                <Arrow
+                  key={ann.id}
+                  {...commonProps}
+                  points={[0, 0, commonProps.width, commonProps.height]}
+                  pointerLength={6}
+                  pointerWidth={6}
+                  fill={commonProps.stroke}
+                  strokeWidth={15}
+                />
+              );
+            }
+
+            if (ann.type === "FREEHAND" && ann.points) {
+              return (
+                <Line
+                  key={ann.id}
+                  id={ann.id}
+                  x={toPixel(ann.x, width)}
+                  y={toPixel(ann.y, height)}
+                  points={ann.points.map((p, i) =>
+                    i % 2 === 0 ? toPixel(p, width) : toPixel(p, height),
+                  )}
+                  stroke={getColor(ann.colorState)}
+                  strokeWidth={2}
+                  tension={0.5}
+                  lineCap="round"
+                  lineJoin="round"
+                  hitStrokeWidth={15}
+                  draggable={activeTool === "CURSOR"}
+                  rotation={ann.rotation || 0}
+                  onClick={(e: KonvaEventObject<MouseEvent>) =>
+                    handleShapeClick(e, ann.id)
+                  }
+                  onTransformEnd={(e: KonvaEventObject<Event>) =>
+                    handleTransformEnd(e, ann.id)
+                  }
+                />
+              );
+            }
+
+            if (ann.type === "TEXT") {
+              return (
+                <Text
+                  key={ann.id}
+                  {...commonProps}
+                  text={ann.textValue || "TEXT LABEL"}
+                  fontSize={toPixel(ann.height, height)}
+                  fill={commonProps.stroke} // Text uses fill, not stroke
+                  fontFamily="sans-serif"
+                  fontStyle="bold"
+                  onDblClick={(e) => {
+                    // When double clicked, get its exact screen position and open the HTML input
+                    const absPos = e.target.absolutePosition();
+                    setEditingText({
+                      id: ann.id,
+                      x: absPos.x,
+                      y: absPos.y,
+                      value: ann.textValue || "",
+                      width: Math.max(
+                        200,
+                        e.target.width() * e.target.scaleX(),
+                      ),
+                      fontSize: toPixel(ann.height, height) * e.target.scaleY(),
+                    });
+                  }}
+                />
+              );
+            }
+            return null;
+          })}
+
+          {selectionBox.visible && (
+            <Rect
+              name="selection-box"
+              x={selectionBox.x}
+              y={selectionBox.y}
+              width={selectionBox.width}
+              height={selectionBox.height}
+              fill="rgba(59, 130, 246, 0.2)"
+              stroke="#3b82f6"
+              strokeWidth={1}
+              listening={false}
+            />
+          )}
+
+          {isDrawing && currentLine.length > 0 && (
+            <Line
+              points={currentLine.map((p, i) =>
+                i % 2 === 0 ? toPixel(p, width) : toPixel(p, height),
+              )}
+              stroke="#10b981" // Emerald-500
+              strokeWidth={2}
+              tension={0.5}
+              lineCap="round"
+              lineJoin="round"
+            />
+          )}
+          <SelectionTransformer stageRef={stageRef} />
+        </Layer>
+      </Stage>
+
+      {editingText && (
+        <input
+          value={editingText.value}
+          onChange={(e) =>
+            setEditingText({ ...editingText, value: e.target.value })
           }
-
-          if (ann.type === "LINE") {
-            return (
-              <Arrow
-                key={ann.id}
-                {...commonProps}
-                points={[0, 0, commonProps.width, commonProps.height]}
-                pointerLength={6}
-                pointerWidth={6}
-                fill={commonProps.stroke}
-                strokeWidth={15}
-              />
-            );
-          }
-
-          if (ann.type === "FREEHAND" && ann.points) {
-            return (
-              <Line
-                key={ann.id}
-                id={ann.id}
-                x={toPixel(ann.x, width)}
-                y={toPixel(ann.y, height)}
-                points={ann.points.map((p, i) =>
-                  i % 2 === 0 ? toPixel(p, width) : toPixel(p, height),
-                )}
-                stroke={getColor(ann.colorState)}
-                strokeWidth={2}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                hitStrokeWidth={15}
-                draggable={activeTool === "CURSOR"}
-                rotation={ann.rotation || 0}
-                onClick={(e: KonvaEventObject<MouseEvent>) =>
-                  handleShapeClick(e, ann.id)
-                }
-                onTransformEnd={(e: KonvaEventObject<Event>) =>
-                  handleTransformEnd(e, ann.id)
-                }
-              />
-            );
-          }
-          return null;
-        })}
-
-        {selectionBox.visible && (
-          <Rect
-            name="selection-box"
-            x={selectionBox.x}
-            y={selectionBox.y}
-            width={selectionBox.width}
-            height={selectionBox.height}
-            fill="rgba(59, 130, 246, 0.2)"
-            stroke="#3b82f6"
-            strokeWidth={1}
-            listening={false}
-          />
-        )}
-
-        {isDrawing && currentLine.length > 0 && (
-          <Line
-            points={currentLine.map((p, i) =>
-              i % 2 === 0 ? toPixel(p, width) : toPixel(p, height),
-            )}
-            stroke="#10b981" // Emerald-500
-            strokeWidth={2}
-            tension={0.5}
-            lineCap="round"
-            lineJoin="round"
-          />
-        )}
-        <SelectionTransformer stageRef={stageRef} />
-      </Layer>
-    </Stage>
+          onBlur={() => {
+            // Save to Zustand when the user clicks away
+            updateAnnotation(editingText.id, { textValue: editingText.value });
+            setEditingText(null);
+          }}
+          onKeyDown={(e) => {
+            // Save to Zustand when the user hits Enter
+            if (e.key === "Enter") {
+              updateAnnotation(editingText.id, {
+                textValue: editingText.value,
+              });
+              setEditingText(null);
+            }
+          }}
+          style={{
+            position: "absolute",
+            top: `${editingText.y}px`,
+            left: `${editingText.x}px`,
+            width: `${editingText.width}px`,
+            fontSize: `${editingText.fontSize}px`,
+            color: "#fff",
+            backgroundColor: "rgba(15, 23, 42, 0.8)", // Slate-900 with opacity
+            border: "2px solid #06b6d4", // Cyan-500
+            borderRadius: "4px",
+            padding: "2px 8px",
+            outline: "none",
+            zIndex: 50,
+            fontFamily: "sans-serif",
+            fontWeight: "bold",
+          }}
+          autoFocus // Automatically highlights the input so they can start typing instantly
+        />
+      )}
+    </>
   );
 };
