@@ -1,6 +1,12 @@
 import { create } from "zustand";
 
-export type ShapeType = "RECTANGLE" | "ELLIPSE" | "CURSOR" | "ICON" | "LINE";
+export type ShapeType =
+  | "RECTANGLE"
+  | "ELLIPSE"
+  | "CURSOR"
+  | "ICON"
+  | "LINE"
+  | "FREEHAND";
 export type AnnotationState = "ACTIVE" | "WARNING" | "INACTIVE";
 
 export interface Annotation {
@@ -14,6 +20,7 @@ export interface Annotation {
   colorState: AnnotationState;
   groupId: string | null;
   rotation?: number;
+  points?: number[];
 }
 
 interface AppState {

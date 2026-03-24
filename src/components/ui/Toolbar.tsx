@@ -19,6 +19,7 @@ import {
   User,
   Leaf,
   ArrowUpRight,
+  PenTool,
 } from "lucide-react";
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="flex items-center gap-2 mb-4">
@@ -92,6 +93,7 @@ export const Toolbar = () => {
       icon: <Leaf size={18} />,
       label: "Environment Node",
     },
+    { type: "FREEHAND", icon: <PenTool size={18} />, label: "Freehand Draw" },
   ];
   // Color States Configuration
   const colorStates: {
