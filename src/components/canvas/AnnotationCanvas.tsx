@@ -185,6 +185,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
       y: toPercentage(node.y(), height),
       width: toPercentage(Math.max(5, node.width() * scaleX), width),
       height: toPercentage(Math.max(5, node.height() * scaleY), height),
+      rotation: node.rotation(),
     });
   };
 
@@ -208,6 +209,7 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
             y: toPixel(ann.y, height),
             width: toPixel(ann.width, width),
             height: toPixel(ann.height, height),
+            rotation: ann.rotation || 0,
             stroke: ann.type === "ICON" ? undefined : strokeColor,
             fill: ann.type === "ICON" ? strokeColor : undefined,
             strokeWidth: 2,
@@ -257,9 +259,10 @@ export const AnnotationCanvas = ({ width, height }: Props) => {
                 key={ann.id}
                 {...commonProps}
                 points={[0, 0, commonProps.width, commonProps.height]}
-                pointerLength={15}
-                pointerWidth={15}
+                pointerLength={6}
+                pointerWidth={6}
                 fill={commonProps.stroke}
+                strokeWidth={15}
               />
             );
           }

@@ -30,7 +30,7 @@ export const SelectionTransformer = ({ stageRef }: Props) => {
       anchorStroke="#3b82f6"
       anchorFill="#ffffff"
       anchorSize={8}
-      rotateEnabled={false}
+      rotateEnabled={true}
     />
   );
 };

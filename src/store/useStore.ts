@@ -13,6 +13,7 @@ export interface Annotation {
   iconType?: string;
   colorState: AnnotationState;
   groupId: string | null;
+  rotation?: number;
 }
 
 interface AppState {
