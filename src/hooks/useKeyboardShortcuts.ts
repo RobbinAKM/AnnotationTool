@@ -5,6 +5,8 @@ export const useKeyboardShortcuts = () => {
   const { deleteSelected, selectedIds, undo, redo } = useStore();
 
   useEffect(() => {
+    const state = useStore.getState();
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLInputElement ||
@@ -16,6 +18,19 @@ export const useKeyboardShortcuts = () => {
       // Deletion
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedIds.length > 0) deleteSelected();
+        return;
+      }
+
+      //Select All (Ctrl/Cmd + A)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+
+        const allIds = state.annotations.map((ann) => ann.id);
+
+        state.setSelectedIds(allIds);
+        if (state.activeTool !== "CURSOR") {
+          state.setActiveTool("CURSOR");
+        }
         return;
       }
 
