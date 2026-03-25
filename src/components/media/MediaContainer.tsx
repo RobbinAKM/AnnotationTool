@@ -4,7 +4,7 @@ import { AnnotationCanvas } from "../canvas/AnnotationCanvas";
 import { Upload, Play, Pause } from "lucide-react";
 
 export const MediaContainer = () => {
-  const { mediaUrl, mediaType, setMedia } = useStore();
+  const { mediaUrl, mediaType, setMedia, setPlaybackToggle } = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -79,11 +79,19 @@ export const MediaContainer = () => {
 
   const togglePlay = () => {
     if (videoRef.current) {
-      if (isPlaying) videoRef.current.pause();
-      else videoRef.current.play();
-      setIsPlaying(!isPlaying);
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
     }
   };
+
+  useEffect(() => {
+    setPlaybackToggle(togglePlay);
+  }, [setPlaybackToggle]);
 
   //  UPLOAD STATE
 

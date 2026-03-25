@@ -57,7 +57,7 @@ export const Toolbar = () => {
               (tool.type !== "ICON" || activeIcon === tool.faCode);
             return (
               <button
-                key={tool.type}
+                key={tool.type + (tool.faCode || "")}
                 onClick={() => setActiveTool(tool.type, tool.faCode)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 group ${
                   isActive
@@ -70,9 +70,20 @@ export const Toolbar = () => {
                 >
                   {tool.icon}
                 </div>
-                <span className="text-sm font-medium tracking-wide">
+                <span className="text-sm font-medium tracking-wide ml-3">
                   {tool.label}
                 </span>
+                {tool.shortcut && (
+                  <kbd
+                    className={`ml-10 mr-15 text-[10px] font-mono px-12 py-0.5 rounded border ${
+                      isActive
+                        ? "border-cyan-500/50 text-cyan-300 bg-cyan-950/50"
+                        : "border-slate-700 text-slate-500 bg-slate-800 group-hover:border-slate-500 group-hover:text-slate-300"
+                    }`}
+                  >
+                    {tool.shortcut}
+                  </kbd>
+                )}
               </button>
             );
           })}
@@ -98,6 +109,15 @@ export const Toolbar = () => {
               <span className="text-sm font-medium tracking-wide">
                 {cs.label}
               </span>
+              <kbd
+                className={`ml-3 text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  hasSelection
+                    ? "border-slate-500/50 text-slate-300 bg-slate-900/50"
+                    : "border-slate-800 text-slate-600 bg-transparent"
+                }`}
+              >
+                {cs.shortcut}
+              </kbd>
             </button>
           ))}
         </div>

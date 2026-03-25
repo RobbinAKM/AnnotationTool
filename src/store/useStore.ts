@@ -52,6 +52,9 @@ interface AppState {
   // History Actions
   undo: () => void;
   redo: () => void;
+
+  togglePlayback: () => void;
+  setPlaybackToggle: (toggleFn: () => void) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -133,4 +136,7 @@ export const useStore = create<AppState>((set) => ({
         selectedIds: [],
       };
     }),
+
+  togglePlayback: () => {},
+  setPlaybackToggle: (fn) => set({ togglePlayback: fn }),
 }));

@@ -56,6 +56,68 @@ export const useKeyboardShortcuts = () => {
         redo();
         return;
       }
+
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault(); // Stop the browser from scrolling down
+
+        // If a toolbar button or the video is currently focused,
+        // pressing space will try to natively click it. We forcefully remove focus
+        // so our global shortcut works flawlessly every time.
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+
+        state.togglePlayback();
+        return;
+      }
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        const key = e.key.toLowerCase();
+        switch (key) {
+          case "v":
+            state.setActiveTool("CURSOR");
+            break; // 'V' is the universal standard for the Selection/Move tool
+          case "t":
+            state.setActiveTool("TEXT");
+            break;
+          case "f":
+            state.setActiveTool("FREEHAND");
+            break;
+          case "r":
+            state.setActiveTool("RECTANGLE");
+            break;
+          case "e":
+            state.setActiveTool("ELLIPSE");
+            break;
+          case "a":
+            state.setActiveTool("LINE");
+            break;
+          case "m":
+            state.setActiveTool("ICON", "\uf1b9");
+            break;
+          case "p":
+            state.setActiveTool("ICON", "\uf007");
+            break;
+          case "l":
+            state.setActiveTool("ICON", "\uf06c");
+            break;
+          case "c":
+            state.setActiveTool("ICON", "\uf030");
+            break;
+
+          case "1":
+            if (state.selectedIds.length > 0)
+              state.updateSelectedStates("ACTIVE");
+            break;
+          case "2":
+            if (state.selectedIds.length > 0)
+              state.updateSelectedStates("WARNING");
+            break;
+          case "3":
+            if (state.selectedIds.length > 0)
+              state.updateSelectedStates("INACTIVE");
+            break;
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
