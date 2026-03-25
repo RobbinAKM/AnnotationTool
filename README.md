@@ -89,4 +89,20 @@ In the spirit of transparency and modern engineering workflows, I utilized LLMs 
 
 ---
 
+## ✅ Assignment Requirements Checklist
+
+I have architected this solution to fulfill and exceed all core and bonus requirements outlined in the prompt:
+
+- [x] **Shape Drawing:** Rectangle bounding boxes, Ellipse radiuses, and Directional Arrows.
+- [x] **Node Icons:** Custom security markers (Camera, Vehicle, Person, Environment).
+- [x] **Advanced Inputs:** Freehand path drawing and interactive Text Labels.
+- [x] **Node States:** Selectable threat states (Active/Green, Warning/Red, Inactive/Gray).
+- [x] **Canvas Manipulation:** Select, Move, Resize, and Rotate functionalities.
+- [x] **Multi-Select:** Group selection (`Cmd+A` or drag-box) with custom group-translation math.
+- [x] **History Stack:** Full Undo/Redo state management.
+- [x] **Export:** Clean, structured JSON telemetry payload generation.
+- [x] **Bonus (Infra):** Delivered as a production-ready, immutable Docker container.
+- [x] **Bonus (UX):** Universal power-user keyboard shortcuts for zero-mouse operations.
+
+---
 _Developed for the Avida Engineering Team._
