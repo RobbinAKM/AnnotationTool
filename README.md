@@ -2,8 +2,10 @@
 
 A high-performance, web-based video and image annotation tool built for security analysts. Designed to generate strict, ML-ready telemetry data with zero-latency canvas rendering.
 
-<img width="1436" height="804" alt="image" src="https://github.com/user-attachments/assets/660f117c-d7d8-4ef6-8b78-2655c6a6c2e7" />
+### This is the user manual for how to use the app ⬇️
+https://github.com/RobbinAKM/AnnotationTool/blob/feature/annotationTool/USER_MANUAL.md
 
+<img width="1436" height="804" alt="image" src="https://github.com/user-attachments/assets/660f117c-d7d8-4ef6-8b78-2655c6a6c2e7" />
 
 ##  Quick Start (How to Run Locally)
 
